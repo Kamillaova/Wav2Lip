@@ -25,7 +25,9 @@ def get_smoothened_boxes(boxes, T):
 		boxes[i] = np.mean(window, axis=0)
 	return boxes
 
+print("Loading face detector")
 detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_input=False, device=device)
+print("Face detector loaded")
 
 def face_detect(images):
 	batch_size = 16
@@ -133,6 +135,7 @@ def load_model(path):
 	model = model.to(device)
 	return model.eval()
 
+print("Loading model")
 model = load_model("checkpoints/wav2lip.pth")
 print("Model loaded")
 
