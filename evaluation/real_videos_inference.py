@@ -214,11 +214,12 @@ def main():
 		audio_src = os.path.join(args.data_root, audio_src)
 		video = os.path.join(args.data_root, video)
 
-		command = 'ffmpeg -loglevel panic -y -i {} -strict -2 {}'.format(audio_src, '../temp/temp.wav')
-		subprocess.call(command, shell=True)
-		temp_audio = '../temp/temp.wav'
+		#command = 'ffmpeg -loglevel panic -y -i {} -strict -2 {}'.format(audio_src, '../temp/temp.wav')
+		#subprocess.call(command, shell=True)
+		# temp_audio = '../temp/temp.wav'
+		temp_audio = audio_src
 
-		wav = audio.load_wav(temp_audio, 16000)
+		wav = audio.load_wav(temp_audio, 24000) # 16000
 		mel = audio.melspectrogram(wav)
 
 		if np.isnan(mel.reshape(-1)).sum() > 0:
@@ -296,7 +297,7 @@ def main():
 		out.release()
 
 		vid = os.path.join(args.results_dir, '{}.mp4'.format(idx))
-		command = 'ffmpeg -loglevel panic -y -i {} -i {} -strict -2 -q:v 1 {}'.format('../temp/temp.wav', 
+		command = 'ffmpeg -loglevel panic -y -i {} -i {} -strict -2 -c:v copy {}'.format('../temp/temp.wav', 
 								'../temp/result.avi', vid)
 		subprocess.call(command, shell=True)
 

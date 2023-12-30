@@ -52,10 +52,10 @@ class SyncNetInstance(torch.nn.Module):
 
         os.makedirs(os.path.join(opt.tmp_dir,opt.reference))
 
-        command = ("ffmpeg -loglevel error -y -i %s -threads 1 -f image2 %s" % (videofile,os.path.join(opt.tmp_dir,opt.reference,'%06d.jpg'))) 
+        command = ("ffmpeg -loglevel error -y -hwaccel_output_format cuda -hwaccel cuvid -c:v h264_cuvid -i %s -hwaccel cuda -threads 1 -f image2 %s" % (videofile,os.path.join(opt.tmp_dir,opt.reference,'%06d.jpg'))) 
         output = subprocess.call(command, shell=True, stdout=None)
 
-        command = ("ffmpeg -loglevel error -y -i %s -async 1 -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (videofile,os.path.join(opt.tmp_dir,opt.reference,'audio.wav'))) 
+        command = ("ffmpeg -loglevel error -y -hwaccel_output_format cuda -hwaccel cuvid -c:v h264_cuvid -i %s -hwaccel cuda -async 1 -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (videofile,os.path.join(opt.tmp_dir,opt.reference,'audio.wav'))) 
         output = subprocess.call(command, shell=True, stdout=None)
         
         # ========== ==========
