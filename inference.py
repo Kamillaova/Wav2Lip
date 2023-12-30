@@ -8,9 +8,9 @@ import torch, face_detection
 from models import Wav2Lip
 import platform
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import uuid
-
 
 def get_smoothened_boxes(boxes, T):
 	for i in range(len(boxes)):
@@ -224,7 +224,7 @@ class Request(BaseModel):
 	video_path: str
 
 
-@app.post("/")
+@app.post("/", response_class=PlainTextResponse)
 async def generate(request: Request):
 	out = f"/result/{uuid.uuid4()}.mp4"
 	main(request.audio_path, request.video_path, out)
