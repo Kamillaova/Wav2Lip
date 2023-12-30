@@ -74,7 +74,9 @@ def face_detect(images):
 def datagen(frames, mels):
 	img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
 
+  print("Run face detection")
 	face_det_results = face_detect(frames)  # BGR2RGB for CNN face detection
+  print("End face detection")
 
 	for i, m in enumerate(mels):
 		idx = i % len(frames)
@@ -115,7 +117,7 @@ def datagen(frames, mels):
 
 		yield img_batch, mel_batch, frame_batch, coords_batch
 
-mel_step_size = 16
+mel_step_size = 32
 fourcc = cv2.VideoWriter_fourcc(*"I420")
 
 def load_model(path):
@@ -175,6 +177,8 @@ def main(in_audio: str, in_video: str, out_video: str):
 	mel_idx_multiplier = 80.0 / fps
 	i = 0
 
+
+	print("Start generating mel chunks")
 	while True:
 		start_idx = int(i * mel_idx_multiplier)
 		if start_idx + mel_step_size > len(mel[0]):
@@ -182,13 +186,16 @@ def main(in_audio: str, in_video: str, out_video: str):
 			break
 		mel_chunks.append(mel[:, start_idx : start_idx + mel_step_size])
 		i += 1
+	print("End generating mel chunks")
 
 	print("Length of mel chunks: {}".format(len(mel_chunks)))
 
 	full_frames = full_frames[: len(mel_chunks)]
 
 	batch_size = 128
+	print("Start datagen")
 	gen = datagen(full_frames.copy(), mel_chunks)
+	print("End datagen")
 
 	frame_h, frame_w = full_frames[0].shape[:-1]
 	out = cv2.VideoWriter(tmpout, fourcc, fps, (frame_w, frame_h))
@@ -213,7 +220,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 	out.release()
 
-	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v h264_nvenc -preset default {}".format(in_audio, tmpout, out_video)
+	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v h264_nvenc -tune fast {}".format(in_audio, tmpout, out_video)
 	subprocess.call(command, shell=True)
 	os.remove(tmpout)
 
