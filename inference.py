@@ -224,7 +224,7 @@ class Request(BaseModel):
 	video_path: str
 
 
-@app.post("/generate")
+@app.post("/")
 async def generate(request: Request):
 	out = f"/result/{uuid.uuid4()}.mp4"
 	main(request.audio_path, request.video_path, out)
