@@ -12,6 +12,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import uuid
 
+
 def get_smoothened_boxes(boxes, T):
 	for i in range(len(boxes)):
 		if i + T > len(boxes):
@@ -141,19 +142,28 @@ def load_model(path):
 	return model.eval()
 
 
+video_cache = {}
+
+
 def main(in_audio: str, in_video: str, out_video: str):
-	video_stream = cv2.VideoCapture(in_video)
-	fps = video_stream.get(cv2.CAP_PROP_FPS)
-
-	print("Reading video frames...")
-
 	full_frames = []
-	while 1:
-		still_reading, frame = video_stream.read()
-		if not still_reading:
-			video_stream.release()
-			break
-		full_frames.append(frame)
+
+	if in_video in video_cache:
+		print("Using cached video")
+		full_frames = video_cache[in_video]
+	else:
+		video_stream = cv2.VideoCapture(in_video)
+		fps = video_stream.get(cv2.CAP_PROP_FPS)
+
+		print("Reading video frames...")
+
+		while 1:
+			still_reading, frame = video_stream.read()
+			if not still_reading:
+				video_stream.release()
+				break
+			full_frames.append(frame)
+		video_cache[in_video] = full_frames
 
 	print("Number of frames available for inference: " + str(len(full_frames)))
 
