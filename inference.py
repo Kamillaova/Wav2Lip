@@ -74,9 +74,9 @@ def face_detect(images):
 def datagen(frames, mels):
 	img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
 
-  print("Run face detection")
+	print("Run face detection")
 	face_det_results = face_detect(frames)  # BGR2RGB for CNN face detection
-  print("End face detection")
+	print("End face detection")
 
 	for i, m in enumerate(mels):
 		idx = i % len(frames)
