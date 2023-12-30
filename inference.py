@@ -30,7 +30,7 @@ detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_i
 print("Face detector loaded")
 
 def face_detect(images):
-	batch_size = 4
+	batch_size = 16
 
 	while True:
 		predictions = []
