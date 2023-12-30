@@ -221,7 +221,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 	out.release()
 
-	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v h264_nvenc -tune fast {}".format(in_audio, tmpout, out_video)
+	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v h264_nvenc -preset fast {}".format(in_audio, tmpout, out_video)
 	subprocess.call(command, shell=True)
 	os.remove(tmpout)
 
