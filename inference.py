@@ -199,7 +199,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 			frame_h, frame_w = full_frames[0].shape[:-1]
 			out = cv2.VideoWriter(
 				"temp/result.avi",
-				cv2.VideoWriter_fourcc(*"DIVX"),
+				cv2.VideoWriter_fourcc(*"h264"),
 				fps,
 				(frame_w, frame_h),
 			)
