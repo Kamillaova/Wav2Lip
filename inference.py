@@ -30,7 +30,7 @@ detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_i
 print("Face detector loaded")
 
 def face_detect(images):
-	batch_size = 32
+	batch_size = 4
 
 	while True:
 		predictions = []
@@ -79,7 +79,7 @@ def datagen(frames, mels):
 		frame_to_save = frames[idx].copy()
 		face, coords = face_det_results[idx].copy()
 
-		face_size = 128
+		face_size = 96
 
 		face = cv2.resize(face, (face_size, face_size))
 
@@ -191,6 +191,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 	batch_size = 128
 	print("Start datagen")
 	gen = datagen(full_frames.copy(), mel_chunks)
+
 	print("End datagen")
 
 	frame_h, frame_w = full_frames[0].shape[:-1]
