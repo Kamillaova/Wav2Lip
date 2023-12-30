@@ -70,7 +70,6 @@ def face_detect(images):
 		for image, (x1, y1, x2, y2) in zip(images, boxes)
 	]
 
-	del detector
 	return results
 
 def datagen(frames, mels):
