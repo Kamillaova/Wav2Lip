@@ -25,9 +25,9 @@ def get_smoothened_boxes(boxes, T):
 		boxes[i] = np.mean(window, axis=0)
 	return boxes
 
-def face_detect(images):
-	detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_input=False, device=device)
+detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_input=False, device=device)
 
+def face_detect(images):
 	batch_size = 16
 
 	while True:
@@ -117,7 +117,7 @@ def datagen(frames, mels):
 
 		yield img_batch, mel_batch, frame_batch, coords_batch
 
-mel_step_size = 32
+mel_step_size = 16
 fourcc = cv2.VideoWriter_fourcc(*"I420")
 
 def load_model(path):
@@ -176,7 +176,6 @@ def main(in_audio: str, in_video: str, out_video: str):
 	mel_chunks = []
 	mel_idx_multiplier = 80.0 / fps
 	i = 0
-
 
 	print("Start generating mel chunks")
 	while True:
