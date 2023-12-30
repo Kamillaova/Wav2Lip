@@ -157,7 +157,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 	print("Number of frames available for inference: " + str(len(full_frames)))
 
-	wav = audio.load_wav(in_audio, 24000)
+	wav = audio.load_wav(in_audio, 16000)
 	mel = audio.melspectrogram(wav)
 
 	mel_chunks = []
