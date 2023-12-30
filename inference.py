@@ -1,3 +1,4 @@
+import os
 from os import listdir, path
 import numpy as np
 import scipy, cv2, os, sys, argparse, audio
@@ -12,6 +13,9 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import uuid
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using {device} for inference.")
+
 def get_smoothened_boxes(boxes, T):
 	for i in range(len(boxes)):
 		if i + T > len(boxes):
@@ -22,26 +26,18 @@ def get_smoothened_boxes(boxes, T):
 	return boxes
 
 def face_detect(images):
-	detector = face_detection.FaceAlignment(
-		face_detection.LandmarksType._2D, flip_input=False, device=device
-	)
+	detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_input=False, device=device)
 
 	batch_size = 16
 
-	while 1:
+	while True:
 		predictions = []
 		try:
 			for i in tqdm(range(0, len(images), batch_size)):
-				predictions.extend(
-					detector.get_detections_for_batch(
-						np.array(images[i : i + batch_size])
-					)
-				)
+				predictions.extend(detector.get_detections_for_batch(np.array(images[i : i + batch_size])))
 		except RuntimeError:
 			if batch_size == 1:
-				raise RuntimeError(
-					"Image too big to run face detection on GPU. Please use the --resize_factor argument"
-				)
+				raise RuntimeError("Image too big to run face detection on GPU. Please use the --resize_factor argument")
 			batch_size //= 2
 			print("Recovering from OOM error; New batch size: {}".format(batch_size))
 			continue
@@ -120,8 +116,7 @@ def datagen(frames, mels):
 		yield img_batch, mel_batch, frame_batch, coords_batch
 
 mel_step_size = 16
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print("Using {} for inference.".format(device))
+fourcc = cv2.VideoWriter_fourcc(*"I420")
 
 def load_model(path):
 	model = Wav2Lip()
@@ -147,6 +142,8 @@ class VideoCache:
 video_cache = {}
 
 def main(in_audio: str, in_video: str, out_video: str):
+	tmpout = f"/tmp/result-{uuid.uuid4()}.nut"
+
 	fps = 0.0
 	full_frames = []
 
@@ -161,7 +158,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 		print("Reading video frames...")
 
-		while 1:
+		while True:
 			still_reading, frame = video_stream.read()
 			if not still_reading:
 				video_stream.release()
@@ -177,7 +174,8 @@ def main(in_audio: str, in_video: str, out_video: str):
 	mel_chunks = []
 	mel_idx_multiplier = 80.0 / fps
 	i = 0
-	while 1:
+
+	while True:
 		start_idx = int(i * mel_idx_multiplier)
 		if start_idx + mel_step_size > len(mel[0]):
 			mel_chunks.append(mel[:, len(mel[0]) - mel_step_size :])
@@ -192,18 +190,12 @@ def main(in_audio: str, in_video: str, out_video: str):
 	batch_size = 128
 	gen = datagen(full_frames.copy(), mel_chunks)
 
+	frame_h, frame_w = full_frames[0].shape[:-1]
+	out = cv2.VideoWriter(tmpout, fourcc, fps, (frame_w, frame_h))
+
 	for i, (img_batch, mel_batch, frames, coords) in enumerate(
 		tqdm(gen, total=int(np.ceil(float(len(mel_chunks)) / batch_size)))
 	):
-		if i == 0:
-			frame_h, frame_w = full_frames[0].shape[:-1]
-			out = cv2.VideoWriter(
-				"temp/result.avi",
-				cv2.VideoWriter_fourcc(*"h264"),
-				fps,
-				(frame_w, frame_h),
-			)
-
 		img_batch = torch.FloatTensor(np.transpose(img_batch, (0, 3, 1, 2))).to(device)
 		mel_batch = torch.FloatTensor(np.transpose(mel_batch, (0, 3, 1, 2))).to(device)
 
@@ -221,10 +213,9 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 	out.release()
 
-	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v copy {}".format(
-		in_audio, "temp/result.avi", out_video
-	)
-	subprocess.call(command, shell=platform.system() != "Windows")
+	command = "ffmpeg -y -i {} -i {} -strict -2 -c:v h264_nvenc -preset default {}".format(in_audio, tmpout, out_video)
+	subprocess.call(command, shell=True)
+	os.remove(tmpout)
 
 app = FastAPI()
 

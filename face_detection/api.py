@@ -4,7 +4,6 @@ import torch
 from torch.utils.model_zoo import load_url
 from enum import Enum
 import numpy as np
-import cv2
 try:
     import urllib.request as request_file
 except BaseException:
