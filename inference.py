@@ -46,7 +46,8 @@ def face_detect(images):
 		break
 
 	results = []
-	pady1, pady2, padx1, padx2 = [0, 10, 0, 0]  # TODO
+	# top, bottom, left, right
+	pady1, pady2, padx1, padx2 = [0, 20, 0, 0]
 	for rect, image in zip(predictions, images):
 		if rect is None:
 			raise ValueError("Face not detected! Ensure the video contains a face in all the frames.")
