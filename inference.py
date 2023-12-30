@@ -12,7 +12,6 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import uuid
 
-
 def get_smoothened_boxes(boxes, T):
 	for i in range(len(boxes)):
 		if i + T > len(boxes):
@@ -21,7 +20,6 @@ def get_smoothened_boxes(boxes, T):
 			window = boxes[i : i + T]
 		boxes[i] = np.mean(window, axis=0)
 	return boxes
-
 
 def face_detect(images):
 	detector = face_detection.FaceAlignment(
@@ -77,7 +75,6 @@ def face_detect(images):
 	del detector
 	return results
 
-
 def datagen(frames, mels):
 	img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
 
@@ -122,11 +119,9 @@ def datagen(frames, mels):
 
 		yield img_batch, mel_batch, frame_batch, coords_batch
 
-
 mel_step_size = 16
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using {} for inference.".format(device))
-
 
 def load_model(path):
 	model = Wav2Lip()
@@ -141,16 +136,25 @@ def load_model(path):
 	model = model.to(device)
 	return model.eval()
 
+model = load_model("checkpoints/wav2lip.pth")
+print("Model loaded")
+
+class VideoCache:
+	def __init__(self, fps, frames):
+		self.fps = fps
+		self.frames = frames
 
 video_cache = {}
 
-
 def main(in_audio: str, in_video: str, out_video: str):
+	fps = 0.0
 	full_frames = []
 
 	if in_video in video_cache:
 		print("Using cached video")
-		full_frames = video_cache[in_video]
+		val = video_cache[in_video]
+		fps = val.fps
+		full_frames = val.frames
 	else:
 		video_stream = cv2.VideoCapture(in_video)
 		fps = video_stream.get(cv2.CAP_PROP_FPS)
@@ -163,7 +167,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 				video_stream.release()
 				break
 			full_frames.append(frame)
-		video_cache[in_video] = full_frames
+		video_cache[in_video] = VideoCache(fps, full_frames)
 
 	print("Number of frames available for inference: " + str(len(full_frames)))
 
@@ -192,9 +196,6 @@ def main(in_audio: str, in_video: str, out_video: str):
 		tqdm(gen, total=int(np.ceil(float(len(mel_chunks)) / batch_size)))
 	):
 		if i == 0:
-			model = load_model("checkpoints/wav2lip.pth")
-			print("Model loaded")
-
 			frame_h, frame_w = full_frames[0].shape[:-1]
 			out = cv2.VideoWriter(
 				"temp/result.avi",
@@ -225,14 +226,11 @@ def main(in_audio: str, in_video: str, out_video: str):
 	)
 	subprocess.call(command, shell=platform.system() != "Windows")
 
-
 app = FastAPI()
-
 
 class Request(BaseModel):
 	audio_path: str
 	video_path: str
-
 
 @app.post("/", response_class=PlainTextResponse)
 async def generate(request: Request):
