@@ -30,7 +30,7 @@ detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, flip_i
 print("Face detector loaded")
 
 def face_detect(images):
-	batch_size = 16
+	batch_size = 32
 
 	while True:
 		predictions = []
@@ -49,12 +49,7 @@ def face_detect(images):
 	pady1, pady2, padx1, padx2 = [0, 10, 0, 0]  # TODO
 	for rect, image in zip(predictions, images):
 		if rect is None:
-			cv2.imwrite(
-				"temp/faulty_frame.jpg", image
-			)  # check this frame where the face was not detected.
-			raise ValueError(
-				"Face not detected! Ensure the video contains a face in all the frames."
-			)
+			raise ValueError("Face not detected! Ensure the video contains a face in all the frames.")
 
 		y1 = max(0, rect[1] - pady1)
 		y2 = min(image.shape[0], rect[3] + pady2)
@@ -76,7 +71,7 @@ def datagen(frames, mels):
 	img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
 
 	print("Run face detection")
-	face_det_results = face_detect(frames)  # BGR2RGB for CNN face detection
+	face_det_results = face_detect(frames)
 	print("End face detection")
 
 	for i, m in enumerate(mels):
@@ -84,7 +79,9 @@ def datagen(frames, mels):
 		frame_to_save = frames[idx].copy()
 		face, coords = face_det_results[idx].copy()
 
-		face = cv2.resize(face, (96, 96))  # TODO
+		face_size = 128
+
+		face = cv2.resize(face, (face_size, face_size))
 
 		img_batch.append(face)
 		mel_batch.append(m)
@@ -95,12 +92,10 @@ def datagen(frames, mels):
 			img_batch, mel_batch = np.asarray(img_batch), np.asarray(mel_batch)
 
 			img_masked = img_batch.copy()
-			img_masked[:, 96 // 2 :] = 0  # TODO 96
+			img_masked[:, face_size // 2 :] = 0
 
 			img_batch = np.concatenate((img_masked, img_batch), axis=3) / 255.0
-			mel_batch = np.reshape(
-				mel_batch, [len(mel_batch), mel_batch.shape[1], mel_batch.shape[2], 1]
-			)
+			mel_batch = np.reshape(mel_batch, [len(mel_batch), mel_batch.shape[1], mel_batch.shape[2], 1])
 
 			yield img_batch, mel_batch, frame_batch, coords_batch
 			img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
@@ -109,7 +104,7 @@ def datagen(frames, mels):
 		img_batch, mel_batch = np.asarray(img_batch), np.asarray(mel_batch)
 
 		img_masked = img_batch.copy()
-		img_masked[:, 96 // 2 :] = 0  # TODO 96
+		img_masked[:, face_size // 2 :] = 0
 
 		img_batch = np.concatenate((img_masked, img_batch), axis=3) / 255.0
 		mel_batch = np.reshape(
