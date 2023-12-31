@@ -39,7 +39,7 @@ def face_detect(images):
 				predictions.extend(detector.get_detections_for_batch(np.array(images[i : i + batch_size])))
 		except RuntimeError:
 			if batch_size == 1:
-				raise RuntimeError("Image too big to run face detection on GPU. Please use the --resize_factor argument")
+				raise RuntimeError("Image too big to run face detection on GPU.")
 			batch_size //= 2
 			print("Recovering from OOM error; New batch size: {}".format(batch_size))
 			continue
@@ -47,7 +47,7 @@ def face_detect(images):
 
 	results = []
 	# top, bottom, left, right
-	pady1, pady2, padx1, padx2 = [0, -8, 0, 0]
+	pady1, pady2, padx1, padx2 = [0, 10, 0, 0]
 	for rect, image in zip(predictions, images):
 		if rect is None:
 			raise ValueError("Face not detected! Ensure the video contains a face in all the frames.")
@@ -77,8 +77,8 @@ def datagen(frames, mels):
 
 	for i, m in enumerate(mels):
 		idx = i % len(frames)
-		frame_to_save = frames[idx].copy()
-		face, coords = face_det_results[idx].copy()
+		frame_to_save = frames[idx]
+		face, coords = face_det_results[idx]
 
 		face_size = 96
 
@@ -89,7 +89,7 @@ def datagen(frames, mels):
 		frame_batch.append(frame_to_save)
 		coords_batch.append(coords)
 
-		if len(img_batch) >= 128:
+		if len(img_batch) >= batch_size:
 			img_batch, mel_batch = np.asarray(img_batch), np.asarray(mel_batch)
 
 			img_masked = img_batch.copy()
@@ -189,10 +189,9 @@ def main(in_audio: str, in_video: str, out_video: str):
 
 	full_frames = full_frames[: len(mel_chunks)]
 
-	batch_size = 128
 	print("Start datagen")
-	gen = datagen(full_frames.copy(), mel_chunks)
-
+	batch_size = 128
+	gen = datagen(full_frames, mel_chunks, batch_size)
 	print("End datagen")
 
 	frame_h, frame_w = full_frames[0].shape[:-1]
