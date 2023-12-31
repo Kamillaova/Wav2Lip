@@ -68,7 +68,7 @@ def face_detect(images):
 
 	return results
 
-def datagen(frames, mels):
+def datagen(frames, mels, batch_size):
 	img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
 
 	print("Run face detection")
