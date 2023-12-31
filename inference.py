@@ -205,13 +205,13 @@ def main(in_audio: str, in_video: str, out_video: str):
 	out = cv2.VideoWriter(tmpout, fourcc, fps, (frame_w, frame_h))
 
 	for i, (img_batch, mel_batch, frames, coords) in enumerate(gen):
-		img_batch = torch.FloatTensor(np.transpose(img_batch, (0, 3, 1, 2))).to(device)
-		mel_batch = torch.FloatTensor(np.transpose(mel_batch, (0, 3, 1, 2))).to(device)
+		img_batch = torch.FloatTensor(img_batch).to(device)
+		mel_batch = torch.FloatTensor(mel_batch).to(device)
 
 		with torch.no_grad():
 			pred = model(mel_batch, img_batch)
 
-		pred = pred.cpu().numpy().transpose(0, 2, 3, 1) * 255.0
+		pred = pred.cpu().numpy() * 255.0
 
 		for p, f, c in zip(pred, frames, coords):
 			y1, y2, x1, x2 = c
