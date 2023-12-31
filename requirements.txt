@@ -1,6 +1,6 @@
-lws
-librosa
 numpy
+librosa
+lws
 opencv-python
 torch
 fastapi[all]
