@@ -170,6 +170,7 @@ def main(in_audio: str, in_video: str, out_video: str):
 			if not still_reading:
 				video_stream.release()
 				break
+			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			full_frames.append(frame)
 		video_cache[in_video] = VideoCache(fps, full_frames)
 
@@ -217,7 +218,8 @@ def main(in_audio: str, in_video: str, out_video: str):
 			y1, y2, x1, x2 = c
 			p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
 
-			f[y1:y2, x1:x2] = p[...,::-1]
+			f[y1:y2, x1:x2] = p
+			f = cv2.cvtColor(f, cv2.COLOR_RGB2BGR)
 			out.write(f)
 
 	out.release()
